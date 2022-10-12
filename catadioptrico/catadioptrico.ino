@@ -3,6 +3,7 @@
 #include <SPI.h> //biblioteca para comunicação do barramento SPI
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
+#include <HTTPClient.h>
 #include <PubSubClient.h>
 #include <ESPmDNS.h>
 
@@ -12,6 +13,34 @@ const char* password = "Apto!203@)#";
 //const char* ssid = "Network_Mustard";
 //const char* password = "458@33ns!";
 const char* mqtt_server = "mqtt.tago.io";
+
+const char* root_ca = \
+"-----BEGIN CERTIFICATE-----\n" \
+"MIIEODCCAyCgAwIBAgIQOl/rsaTgFhSdiHmbGtv3zzANBgkqhkiG9w0BAQsFADBI\n" \
+"MRswGQYDVQQDDBJFU0VUIFNTTCBGaWx0ZXIgQ0ExHDAaBgNVBAoME0VTRVQsIHNw\n" \
+"b2wuIHMgci4gby4xCzAJBgNVBAYTAlNLMB4XDTIyMDMxNDE4Mzk1NVoXDTIzMDMw\n" \
+"OTE4Mzk1NVowajELMAkGA1UEBhMCVVMxCzAJBgNVBAgTAldBMRAwDgYDVQQHEwdS\n" \
+"ZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xHDAaBgNVBAMM\n" \
+"EyouYXp1cmV3ZWJzaXRlcy5uZXQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK\n" \
+"AoIBAQCWBfNR9xJ+SzUD+xa1hXIa7iqt72vwahUBfb47n645T+L5mClNOrY7auMw\n" \
+"KfkTni2nPyphilQdGskUTY0S5z72sEmBjo9Ar4UQ47ULf11BoRmU+8Diz0zw2x/i\n" \
+"DdTAoDI3QTC2rW/t2vOORwLPG4aBvcCwxMJ47Vve8HmwP8DyFy5OBvrmqC2RFyQi\n" \
+"UPt6cN4i7Wa84CSHcuV9FrpyvHY3Ic/+ZfIfkWIoG67nugrEP/ACsnDLks1Wzupf\n" \
+"h2448AU7T2ZNJJrymOEC4T7aorVfDOMpsFu8D5irRV0VtpM8pw3ybIQEHcXkj6Pa\n" \
+"nUl1MO/z6NUNgoQwsWDSUmcHd9bvAgMBAAGjgfswgfgwCwYDVR0PBAQDAgWgMB0G\n" \
+"A1UdDgQWBBRpRVLk5gIOwW1YTJVsX2xc/cOekjAfBgNVHSMEGDAWgBSBo/xRTxp4\n" \
+"/lXUTU0kZgJc92EXZzB8BgNVHREEdTBzghMqLmF6dXJld2Vic2l0ZXMubmV0ghcq\n" \
+"LnNjbS5henVyZXdlYnNpdGVzLm5ldIISKi5henVyZS1tb2JpbGUubmV0ghYqLnNj\n" \
+"bS5henVyZS1tb2JpbGUubmV0ghcqLnNzby5henVyZXdlYnNpdGVzLm5ldDAMBgNV\n" \
+"HRMBAf8EAjAAMB0GA1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcDATANBgkqhkiG\n" \
+"9w0BAQsFAAOCAQEAo46rwB7edJUcQgZlHNwuj2y4Lb3bvfvvtAwtU7iR0flMxpED\n" \
+"vYwSGvNqd4suRgl3m6qpoCo1k38GtF7YOGxVKtO0k4VRMXt9vG8Yrb0L6KeGz+pf\n" \
+"EnVOWaz3ILCatD0pXa/0xnN/RMAqd4Ra/iF9BEH/Ah3MgvqKqHN6K0JjzmoVJwV+\n" \
+"polnEQI2stPH8t8hLoPmf7/RJ1gidWefCHyGJROz9Hb4iIqBQthswenzxD/0ySbV\n" \
+"ePtYVtTiP0jlTNQxqXTLLt4CLD1qQEqqzc3qwX790teopyRCfpNB309L8zpb87q0\n" \
+"5+9QKoA8WaR+xhnuP0CvNey2Vqn86vsKTK3q2g==\n" \
+"-----END CERTIFICATE-----\n";
+
 #define mqtt_port 1883
 #define MQTT_USER "esp32"
 #define MQTT_PASSWORD "e8e008b2-edba-4954-bd58-6111f26c8d41"
@@ -30,9 +59,9 @@ MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance
 
 char* lastTagRead = "";
 String emergencyTag = "";
+String urlEmergency = "https://greeenwaveapi.azurewebsites.net/api/Veiculo/EstadoEmergencia?Rfid=";
 
 WiFiClient wifiClient;
-
 PubSubClient client(wifiClient);
 
 void setup_wifi() {
@@ -184,6 +213,34 @@ void loop() {
   tag.toCharArray(lastTagRead, tagLength+1);
 
   publishLTR(lastTagRead); //publica a tag sem o espaco em branco no inicio
+
+  tag.replace(" ", "%20");
+  Serial.println(tag);
+
+  if ((WiFi.status() == WL_CONNECTED)) {
+    HTTPClient http;
+    String urlEmergencyTag = urlEmergency+tag;
+    Serial.println("Requisicao");
+    Serial.println(urlEmergencyTag);
+    http.begin(urlEmergencyTag); //URL de requisição para api
+    http.addHeader("Connection", "keep-alive");
+    http.addHeader("Accept", "*/*");
+    int httpCode = http.GET();
+
+    if (httpCode > 0){
+      String payload = http.getString();
+      Serial.println(httpCode);
+      Serial.println(payload);
+      if (payload == "true"){
+        publishPriorityGreenWave("1");
+      }
+    }
+    else {
+      Serial.println("Error on HTTP rquest");
+      Serial.println(httpCode);
+    }
+    http.end();
+  }
 
   mfrc522.PICC_HaltA();
   mfrc522.PCD_StopCrypto1();
