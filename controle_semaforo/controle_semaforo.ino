@@ -37,6 +37,8 @@ void setup_wifi() {
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
+  WiFi.setAutoReconnect(true);
+  WiFi.persistent(true);
 }
 
 void reconnect() {
@@ -64,16 +66,37 @@ void reconnect() {
 }
 
 void priorityGreenWave() {
+  delay(1500);
   digitalWrite(red_light,LOW);
   digitalWrite(yellow_light,LOW);
   digitalWrite(green_light,HIGH);
   
   Serial.print("Priority Green Wave is starting!");
-  Serial.println(); 
+  Serial.println();
   publishSerialData("PGW!");
   delay(40000);
   
   Serial.print("End of Priority Green Wave");
+  Serial.println();
+}
+
+void emergency() {
+  digitalWrite(red_light,LOW);
+  digitalWrite(yellow_light,HIGH);
+  digitalWrite(green_light,LOW);
+  delay(1000);
+
+  digitalWrite(red_light,LOW);
+  digitalWrite(yellow_light,LOW);
+  digitalWrite(green_light,HIGH);
+  delay(40000);
+  
+  Serial.print("Emergency");
+  Serial.println(); 
+  publishSerialData("Area_1 Emergency");
+  delay(40000);
+  
+  Serial.print("End of Emergency");
   Serial.println(); 
 }
 
@@ -83,24 +106,24 @@ void normalTrafficLigth() {
   digitalWrite(green_light,LOW);
   Serial.print("Yellow");
   Serial.println(); 
-  publishSerialData("Yellow");
-  delay(2000);
+  //publishSerialData("Yellow");
+  delay(1000);
   
   digitalWrite(red_light,HIGH);
   digitalWrite(yellow_light,LOW);
   digitalWrite(green_light,LOW);
   Serial.print("Red");
   Serial.println(); 
-  publishSerialData("Red");
-  delay(5000);
+  //publishSerialData("Red");
+  delay(2000);
   
   digitalWrite(red_light,LOW);
   digitalWrite(yellow_light,LOW);
   digitalWrite(green_light,HIGH);
   Serial.print("Green");
   Serial.println(); 
-  publishSerialData("Green");
-  delay(10000);
+  //publishSerialData("Green");
+  delay(5000);
 }
 
 void callback(char* topic, byte *payload, unsigned int length) {
@@ -110,12 +133,13 @@ void callback(char* topic, byte *payload, unsigned int length) {
   Serial.println(topic);
   Serial.print("data:");  
   Serial.write(payload, length);
-  Serial.println();
-  Serial.println();
   Serial.println("!!!");
   if((char)payload[0] == '1'){
     Serial.println("PGW!");
     priorityGreenWave();
+  }
+  else{
+    emergency();
   }
 }
 
@@ -149,5 +173,9 @@ void publishSerialData(char *serialData){
 
 void loop() {
    client.loop();
+   if (!client.connected()) {
+    reconnect();
+   }
    normalTrafficLigth();
+   client.loop();
 }
