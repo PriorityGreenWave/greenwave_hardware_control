@@ -3,14 +3,14 @@
 #include <PubSubClient.h>
 
 // Update these with values suitable for your network.
-const char* ssid = "3bits_203-2.4Ghz";
-const char* password = "Apto!203@)#";
-//const char* ssid = "Network_Mustard";
-//const char* password = "458@33ns!";
+const char* ssid = "";
+const char* password = "";
+//const char* ssid = "";
+//const char* password = "";
 const char* mqtt_server = "mqtt.tago.io";
 #define mqtt_port 1883
 #define MQTT_USER "esp8266"
-#define MQTT_PASSWORD "e8e008b2-edba-4954-bd58-6111f26c8d41"
+#define MQTT_PASSWORD ""
 #define MQTT_SERIAL_PUBLISH_CH "Area_1/semaforo_3/light_color"
 #define MQTT_SERIAL_RECEIVER_CH "Area_1/semaforos/PGW"
 
