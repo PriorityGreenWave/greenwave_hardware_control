@@ -59,7 +59,7 @@ MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance
 
 char* lastTagRead = "";
 String emergencyTag = "";
-String urlEmergency = "https://greeenwaveapi.azurewebsites.net/api/Veiculo/EstadoEmergencia?Rfid=";
+String urlEmergency = "";
 
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
