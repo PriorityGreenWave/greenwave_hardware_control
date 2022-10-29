@@ -3,14 +3,14 @@
 #include <PubSubClient.h>
 
 // Update these with values suitable for your network.
-const char* ssid = "";
-const char* password = "";
-//const char* ssid = "";
-//const char* password = "";
+const char* ssid = "3bits_203-2.4Ghz";
+const char* password = "Apto!203@)#";
+//const char* ssid = "Network_Mustard";
+//const char* password = "458@33ns!";
 const char* mqtt_server = "mqtt.tago.io";
 #define mqtt_port 1883
 #define MQTT_USER "esp8266"
-#define MQTT_PASSWORD ""
+#define MQTT_PASSWORD "e8e008b2-edba-4954-bd58-6111f26c8d41"
 #define MQTT_SERIAL_PUBLISH_CH "Area_1/semaforo_1/light_color"
 #define MQTT_SERIAL_RECEIVER_CH "Area_1/semaforos/PGW"
 
@@ -81,19 +81,17 @@ void priorityGreenWave() {
 }
 
 void emergency() {
+  Serial.print("Emergency");
+  Serial.println(); 
+  publishSerialData("Area_1 Emergency");
   digitalWrite(red_light,LOW);
   digitalWrite(yellow_light,HIGH);
   digitalWrite(green_light,LOW);
   delay(1000);
 
-  digitalWrite(red_light,LOW);
+  digitalWrite(red_light,HIGH);
   digitalWrite(yellow_light,LOW);
-  digitalWrite(green_light,HIGH);
-  delay(40000);
-  
-  Serial.print("Emergency");
-  Serial.println(); 
-  publishSerialData("Area_1 Emergency");
+  digitalWrite(green_light,LOW);
   delay(40000);
   
   Serial.print("End of Emergency");
@@ -106,7 +104,7 @@ void normalTrafficLigth() {
   digitalWrite(green_light,LOW);
   Serial.print("Yellow");
   Serial.println(); 
-  //publishSerialData("Yellow");
+  publishSerialData("Yellow");
   delay(1000);
   
   digitalWrite(red_light,HIGH);
@@ -114,15 +112,15 @@ void normalTrafficLigth() {
   digitalWrite(green_light,LOW);
   Serial.print("Red");
   Serial.println(); 
-  //publishSerialData("Red");
-  delay(2000);
+  publishSerialData("Red");
+  delay(40000);
   
   digitalWrite(red_light,LOW);
   digitalWrite(yellow_light,LOW);
   digitalWrite(green_light,HIGH);
   Serial.print("Green");
   Serial.println(); 
-  //publishSerialData("Green");
+  publishSerialData("Green");
   delay(5000);
 }
 
@@ -138,7 +136,7 @@ void callback(char* topic, byte *payload, unsigned int length) {
     Serial.println("PGW!");
     priorityGreenWave();
   }
-  else{
+  if((char)payload[0] != '1'){
     emergency();
   }
 }
