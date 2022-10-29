@@ -113,7 +113,7 @@ void normalTrafficLigth() {
   Serial.print("Red");
   Serial.println(); 
   publishSerialData("Red");
-  delay(40000);
+  delay(3000);
   
   digitalWrite(red_light,LOW);
   digitalWrite(yellow_light,LOW);
